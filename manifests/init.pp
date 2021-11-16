@@ -4,8 +4,8 @@
 #   include profile_kerberos_server
 class profile_kerberos_server {
 
-  include kerberos_server::firewall
-  include kerberos_server::scripts
-  include kerberos_server::services
+  include profile_kerberos_server::firewall
+  include profile_kerberos_server::scripts
+  include profile_kerberos_server::services
 
 }

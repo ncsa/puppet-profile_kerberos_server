@@ -1,31 +1,17 @@
 # @summary Configure services for Kerberos server
 #
+# @param packages_absent
+#   List of packages to ensure absent
+#
+# @param packages_present
+#   List of packages to ensure present
+#
 # @example
 #   include profile_kerberos_server::services
-class profile_kerberos_server::services {
-
-  $packages_present = [
-    'bind-utils',
-    'cracklib-devel',
-    'krb5-server',
-    'mlocate',
-    'perl-MailTools',
-    'tcp_wrappers',
-    'xinetd',
-  ]
-
-  $packages_absent = [
-    'avahi',
-    'avahi-autoipd',
-    'NetworkManager',
-    'NetworkManager-adsl',
-    'NetworkManager-bluetooth',
-    'NetworkManager-ppp',
-    'NetworkManager-team',
-    'NetworkManager-tui',
-    'NetworkManager-wifi',
-    'NetworkManager-wwan',
-  ]
+class profile_kerberos_server::services (
+  Array[String] $packages_absent,
+  Array[String] $packages_present,
+) {
 
   ensure_packages($packages_present, {'ensure' => 'present'})
   ensure_packages($packages_absent, {'ensure' => 'absent'})
@@ -33,22 +19,22 @@ class profile_kerberos_server::services {
 #NOTE:  This class' configuration of hosts.allow and hosts.deny could conflict with other
 #       definitions for them in other classes.
   file { '/etc/hosts.allow':
-    source => 'puppet:///modules/kerberos_server/etc/hosts.allow',
+    source => "puppet:///modules/${module_name}/etc/hosts.allow",
     mode   => '0644',
   }
 
   file { '/etc/hosts.deny':
-    source => 'puppet:///modules/kerberos_server/etc/hosts.deny',
+    source => "puppet:///modules/${module_name}/etc/hosts.deny",
     mode   => '0644',
   }
 
   file { '/etc/xinetd.d/krb5-prop':
-    source => 'puppet:///modules/kerberos_server/etc/xinetd.d/krb5-prop',
+    source => "puppet:///modules/${module_name}/etc/xinetd.d/krb5-prop",
     mode   => '0644',
   }
 
   file { '/etc/rsyslog.d/rsyslog-kdc.conf':
-    source => 'puppet:///modules/kerberos_server/etc/rsyslog.d/rsyslog-kdc.conf',
+    source => "puppet:///modules/${module_name}/etc/rsyslog.d/rsyslog-kdc.conf",
     mode   => '0644',
   }
 

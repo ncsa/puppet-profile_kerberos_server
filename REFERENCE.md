@@ -37,6 +37,18 @@ Configure firewall rules for Kerberos services
 include profile_kerberos_server::firewall
 ```
 
+#### Parameters
+
+The following parameters are available in the `profile_kerberos_server::firewall` class:
+
+* [`primary_server`](#primary_server)
+
+##### <a name="primary_server"></a>`primary_server`
+
+Data type: `String`
+
+FQDN of primary kerberos server
+
 ### <a name="profile_kerberos_serverscripts"></a>`profile_kerberos_server::scripts`
 
 Configure scripts for Kerberos services
@@ -60,4 +72,23 @@ Configure services for Kerberos server
 ```puppet
 include profile_kerberos_server::services
 ```
+
+#### Parameters
+
+The following parameters are available in the `profile_kerberos_server::services` class:
+
+* [`packages_absent`](#packages_absent)
+* [`packages_present`](#packages_present)
+
+##### <a name="packages_absent"></a>`packages_absent`
+
+Data type: `Array[String]`
+
+List of packages to ensure absent
+
+##### <a name="packages_present"></a>`packages_present`
+
+Data type: `Array[String]`
+
+List of packages to ensure present
 
