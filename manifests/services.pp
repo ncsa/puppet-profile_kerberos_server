@@ -5,12 +5,26 @@
 class profile_kerberos_server::services {
 
   $packages_present = [
+    'bind-utils',
+    'cracklib-devel',
     'krb5-server',
-    'xinetd',
+    'mlocate',
     'perl-MailTools',
+    'tcp_wrappers',
+    'xinetd',
   ]
 
   $packages_absent = [
+    'avahi',
+    'avahi-autoipd',
+    'NetworkManager',
+    'NetworkManager-adsl',
+    'NetworkManager-bluetooth',
+    'NetworkManager-ppp',
+    'NetworkManager-team',
+    'NetworkManager-tui',
+    'NetworkManager-wifi',
+    'NetworkManager-wwan',
   ]
 
   ensure_packages($packages_present, {'ensure' => 'present'})
