@@ -1,40 +1,35 @@
 # @summary Configure firewall rules for Kerberos services
 #
+# @param primary_server
+#   FQDN of primary kerberos server
+#
 # @example
 #   include profile_kerberos_server::firewall
-class profile_kerberos_server::firewall {
+class profile_kerberos_server::firewall (
+  String $primary_server,
+) {
 
-#-A INPUT -p tcp -s brick.ncsa.uiuc.edu --dports krb5_prop -j ACCEPT
   firewall { '1000 Kerberos krb5_prop via TCP':
     proto  => 'tcp',
     dport  => 'krb5_prop',
-    source => 'brick.ncsa.uiuc.edu',
+    source => $primary_server,
     action => 'accept',
-#    provider => 'iptables',
   }
 
-# Don't need kpasswd on slaves, only on master
-#-A INPUT -p all -m multiport --dports kerberos,kpasswd -j ACCEPT
   firewall { '1010 Kerberos via TCP':
-    proto    => 'tcp',
-    dport    => [
+    proto  => 'tcp',
+    dport  => [
       'kerberos',
-#      'kpasswd',
     ],
-    action   => 'accept',
-    provider => 'iptables',
+    action => 'accept',
   }
 
-# Don't need kpasswd on slaves, only on master
-#-A INPUT -p all -m multiport --dports kerberos,kpasswd -j ACCEPT
   firewall { '1011 Kerberos via UDP':
-    proto    => 'udp',
-    dport    => [
+    proto  => 'udp',
+    dport  => [
       'kerberos',
-#      'kpasswd',
     ],
-    action   => 'accept',
-    provider => 'iptables',
+    action => 'accept',
   }
 
 }
