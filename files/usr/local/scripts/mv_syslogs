@@ -1,0 +1,78 @@
+#!/usr/bin/perl
+#
+# Rolls the old syslog files out to AFS.
+#
+
+use strict;
+use Sys::Hostname;
+
+$ENV{PATH} = '/usr/ncsa/bin:' . $ENV{PATH};
+
+# list of users to mail updates to
+my $mailto = "kerberos-admin\@ncsa.uiuc.edu";
+my $subject = "Kerberos syslogs rolled over";
+my $sendmail = 0;
+
+# Get the localhost name
+my ($localhost) = split(/\./,hostname());
+
+my $update_header = "The following files were rolled over on $localhost:";
+
+# get a list of all the .old files in the /usr/afs/logs directory to back up
+my $log_path = "/var/log";
+my @log_files = ("boot.log", "cron", "messages", "maillog", "secure", "wtmp");
+my $archive_path = "/afs/ncsa/projects/kerberos/logs/syslog";
+my @full_loglist = ();
+my $newext = "";
+
+foreach my $logfile (@log_files) {
+
+    opendir(LOGINFO,"$log_path");
+    my @loglist = grep/^$logfile.[1-4]/, readdir(LOGINFO);
+    closedir(LOGINFO);
+    if (scalar(@loglist)) {
+        $sendmail = 1;
+    
+        foreach my $lf (@loglist) {
+            # we want to get the last modification time of the file for
+            # the new extension
+            my $mtime = ( stat("$log_path/$lf") )[9];
+            my ( $mday, $mon, $year ) = ( localtime( $mtime ) )[3..5];
+            ++$mon;
+            $mon = "0" . $mon if (length($mon) != 2);
+            $mday = "0" . $mday if (length($mday) != 2);
+            $year += 1900;
+    
+            my $newext = join('',$year,$mon,$mday);
+
+            # now create the new filename with the prefix and the new extension
+            # and rename the old file to this new filename.
+#            print "mv $log_path/$lf $archive_path/$localhost.$logfile.$newext\n";
+            system("mv $log_path/$lf $archive_path/$localhost.$logfile.$newext");
+            push (@full_loglist,"$log_path/$lf");
+        }
+    }
+}
+
+# if there are any files that have been moved over then mail users
+if ($sendmail)
+{
+    if (-e "/usr/lib/sendmail") {
+        my $mailcmd = "/usr/lib/sendmail";
+        open (MAIL, "| $mailcmd -t -n") || die "Unable to run $mailcmd.\n";
+        print MAIL "To: $mailto\n";
+        print MAIL "Subject: $subject\n";
+    } elsif (-e "/bin/mail") {
+        my $mailcmd = "/bin/mail";
+        open (MAIL, "| $mailcmd -s \"$subject\" $mailto") || die "Unable to run $mailcmd.\n";
+    } else {
+        print "No mail program available, exiting.\n";
+        exit;
+    }
+    print MAIL "$update_header\n";
+    foreach my $log (@full_loglist) {
+        print MAIL "$log\n";
+    }
+    close(MAIL);
+}
+

@@ -1,0 +1,502 @@
+#!/usr/bin/perl
+#
+# Script to do checks and statistics on principals and passwords
+# in the kerberos database.
+#
+
+use Time::Local;
+use Sys::Hostname;
+
+$kadmin_dir = "/usr/sbin";
+$krb5path = "/afs/ncsa/projects/kerberos/scripts/krb5_db_check";
+
+$logdir = "/afs/ncsa.uiuc.edu/projects/kerberos/logs/krb5_db_check";
+
+my %month = ( 'Jan', 0, 'Feb', 1, 'Mar', 2, 'Apr', 3, 'May', 4, 'Jun', 5,
+  'Jul', 6, 'Aug', 7, 'Sep', 8, 'Oct', 9, 'Nov', 10, 'Dec', 11 );
+
+$curr_time = time();
+$sec_in_year = 31536000;
+$sec_in_day = 86400;
+$year_ago = $curr_time - $sec_in_year;
+
+## for new accounts, give 30 days plus a 10 day grace period before the
+#  warnings start
+$fiveweeks_ago = $curr_time - ($sec_in_day * 40);
+
+## (set to 8)  need more time because of weekends
+$dfltdays_ago = $curr_time - ($sec_in_day * 8);
+
+# Date of AFS/Kerberos migration
+$afs_krb5_migdate = 883929600;
+
+# Date we started watching new accounts
+$newacct_startdate = 1084642971;   # May 15th, 2004
+
+## remove the subtraction
+$dflt_startdate = 1084642971;    # May 15th, 2004
+
+@days_to_check = (30, 14, 7, 3, 1, 0);
+
+@days_to_check_dflt = (7, 3, 1, 0);
+
+# Initialize counters
+$total_princs_ctr = 0;
+$host_ctr = 0;
+$irg_ctr = 0;
+$wifi_ctr = 0;
+$bw_ctr = 0;
+$wiki_ctr = 0;
+$never_ctr = 0;
+$year_old_ctr = 0;
+$afs_krb5_ctr = 0;
+$new_acct_ctr = 0;
+$recent_dflt_ctr = 0;
+$disallow_ctr = 0;
+$expired_ctr = 0;
+
+$root_princ = 0;
+
+%userlist = ();
+
+$mailto = "security-alerts+krb\@ncsa.illinois.edu,kerberos-admin\@ncsa.illinois.edu";
+#$mailto = "lindsey\@ncsa.uiuc.edu";
+$mail_from = "krb5_db_check";
+$mail_subj = "Kerberos DB stats";
+
+# Get the localhost name
+($localhost) = split(/\./,hostname());
+
+## test for kadmin.local
+if(!((-r "$kadmin_dir/kadmin.local") && ( -x "$kadmin_dir/kadmin.local"))){
+    print "Error:  kadmin.local not executable, exiting...\n";
+    exit;
+}
+
+
+# Get list of principals to skip
+@skiplist = ();
+if (-f "$krb5path/krb5_passwd_skip.conf") {
+    open (SKIPLIST,"$krb5path/krb5_passwd_skip.conf");
+    while (<SKIPLIST>) {
+        next if((m/^\s*#/) || (m/^\s*$/)); # Skip whitespace and comments
+        chomp();
+        push (@skiplist,$_);
+    }
+    close (SKIPLIST);
+}
+
+# Get full list of principals in the kerberos database
+open (USERLIST, "$kadmin_dir/kadmin.local -q \"listprincs\"|") || die "Could not get kadmin.local listprincs $!\n";
+
+# Move old list and replace with current list
+if (-f "$logdir/princs_full_list") {
+    system("mv $logdir/princs_full_list $logdir/princs_full_list.prev");
+}
+open (FULLIST,">$logdir/princs_full_list");
+
+while (<USERLIST>) {
+
+    # Ignore initial message
+    next if (m/Authenticating as principal.*/);
+
+    $total_princs_ctr++;
+    print FULLIST $_;
+
+    chomp();
+    $user = $_;
+
+    # Principals we don't need to check, but we do count them
+
+    # Ignore host principals
+    if (m/host\/.*/) {
+        $host_ctr++;
+        next;
+    }
+
+    # Ignore */irg principals
+    # These are used by the PACI online proposal submission application.
+    # It uses Kerberos authentication by way of the NCSA KDC, and we didn't
+    # want these users in the standard NCSA.EDU namespace, since they may or may
+    # not have NCSA accounts beyond that app.
+    if (m/.*\/irg\@.*/) {
+        $irg_ctr++;
+        next;
+    }
+
+    # Ignore */wifi principals
+    if (m/.*\/wifi\@.*/) { 
+	$wifi_ctr++;
+	next;
+    }
+
+    # Ignore */wiki principals
+    if (m/.*\/wiki\@.*/) {
+        $wiki_ctr++;
+        next;
+    }
+
+    # Ignore */bw principals
+    if (m/.*\/bw\@.*/) { 
+	$bw_ctr++;
+	next;
+    }
+
+    # Do anything special with /admin principals?
+
+    # Check principal against skip list
+    if (grep(/$user/,@skiplist)) {
+        $skip_ctr++;
+        next;
+    }
+
+    # Is there a root principal? (should never happen, but check)
+    if ($user eq "root\@NCSA.EDU") {
+        $root_princ = 1;
+    }
+    
+    $never_flag = 0;
+    $pwchange_time = 0;
+    $pmod_time = 0;
+    $disallow = 0;
+    $new_acct = 0;
+    $recent_dflt = 0;
+    $expired = 0;
+
+    open (KDBINFO, "$kadmin_dir/kadmin.local -q \"getprinc $user\"|");
+
+    while (<KDBINFO>) {
+        if (m/Last password change: \[never\]/) {
+            $never_flag = 1;
+        }
+
+        # Example for password change line
+        # Last password change: Tue Oct 01 12:49:07 CDT 2002
+        if (m/Last password change: (\S+)\s+(\S+)\s+(\d+)\s+(\d+):(\d+):(\d+)\s+(\S+)\s+(\d+)/) {
+            $mon = $month{$2};
+            $mday = $3;
+            $hours = $4;
+            $min = $5;
+            $sec = $6;
+            $year = $8-1900;
+            $pwchange_time = timelocal($sec,$min,$hours,$mday,$mon,$year);
+        }
+
+        # Example for last modified line
+        # Last modified: Tue Oct 01 12:49:07 CDT 2002 (kadmind@NCSA.EDU)
+        if (m/Last modified: (\S+)\s+(\S+)\s+(\d+)\s+(\d+):(\d+):(\d+)\s+(\S+)\s+(\d+)\s+\((\S+)\@/) {
+            $mon = $month{$2};
+            $mday = $3;
+            $hours = $4;
+            $min = $5;
+            $sec = $6;
+            $year = $8-1900;
+	    $modbyprinc = $9;
+            $pmod_time = timelocal($sec,$min,$hours,$mday,$mon,$year);
+
+	    if($modbyprinc =~ /vdvadmin/){
+		$new_acct = 1;
+	    }
+	    if($modbyprinc =~ /irgadmin/){
+		$recent_dflt = 1;
+	    }
+        }
+
+	if (m/Attributes.*DISALLOW_ALL_TIX/) {
+	    $disallow = 1;
+	}
+
+	if (m/Attributes.*REQUIRES_PWCHANGE/) {
+	    $expired = 1;
+	}
+
+    }
+    close (KBDINFO);
+
+	if(($disallow == 0) && ($expired == 1)){
+	    $expired_ctr++;
+	}elsif($disallow == 1){
+	    $disallow_ctr++;
+	}
+
+    ## don't bother to continue if this user is disallowed tickets
+    if(($disallow == 0) && ($expired == 0)){
+
+## Print "active" principals to STDOUT
+#  be sure to turn off user notification
+#	if($expired == 0){
+#	    print "$user\n";
+#	}
+
+	if($never_flag == 1){
+	    push(@neverusers,$user);
+	}
+	if(($never_flag == 1) && ($new_acct == 0)){
+	    push(@nevernotnew,$user);
+	}
+	if($recent_dflt == 1){
+	    $recent_dflt_ctr++;
+	    push(@dfltusers,$user);
+	}
+
+    # If the "Last password change" was never, then set the password changed
+    # time to the last time the principal was modified.  Otherwise just use
+    # the date in the last password change field.
+	if ($never_flag) {
+	    $never_ctr++;
+	    if ($pmod_time < $afs_krb5_migdate) {
+		$afs_krb5_ctr++;
+	    }
+	    $ptime = $pmod_time;
+
+	    if($new_acct){
+		$new_acct_ctr++;
+		## set the date forward to the day we started watching
+		#  new accounts, this way the new accounts before that day
+		#  will get the same grace period as new accounts after
+		#  this date.  Theoretically, this can be removed a couple
+		#  months from now
+		if($pmod_time < $newacct_startdate){
+		    $ptime = $newacct_startdate;
+		}
+
+	    }
+
+	} else {
+	    $ptime = $pwchange_time;
+	    if($recent_dflt == 1){
+		if($pwchange_time < $dflt_startdate){
+		    $ptime = $dflt_startdate;
+		}
+	    }
+	}
+
+    # Get a count of the number of principals older than a year.
+	if (($curr_time - $ptime) > $sec_in_year) {
+	    $year_old_ctr++;
+	}
+
+    # Check for principals who will expire in x days
+	if($recent_dflt == 1){
+	    foreach $dayx (@days_to_check_dflt) {
+		DateCheckDflt($dayx);
+	    }
+	}else{
+	    foreach $dayx (@days_to_check) {
+		if($new_acct){
+		    ## These are new accounts.  We need to give them a 1 week
+		    #  grace period and then start giving them the 30 day warnings
+		    DateCheckNewAcct($dayx);
+		}else{
+		    DateCheck($dayx);
+		}
+	    }
+	}
+    }
+
+}
+
+close (FULLIST);
+close (USERLIST);
+
+# Get differences between current and previous list
+if (-f "$logdir/princs_full_list" && -f "$logdir/princs_full_list.prev") {
+    open (DIFF, "/usr/bin/diff ${logdir}/princs_full_list.prev ${logdir}/princs_full_list |") || die "Can't diff files: $!";
+}
+@diffs = <DIFF>;
+close (DIFF);
+
+
+# Send results
+open (MAIL, "| /usr/lib/sendmail -t -n -f $mail_from") || die "Cannot find /usr/lib/sendmail: $!\n";
+
+print MAIL "To: $mailto\n";
+print MAIL "Subject: $mail_subj\n\n";
+
+# Print warning if there is a root principal
+if ($root_princ) {
+    print MAIL "\n\nWARNING: There is a root principal in the kerberos database.\n\n";
+}
+
+print MAIL "\n";
+print MAIL "Total number of principals:          $total_princs_ctr\n";
+print MAIL "Total number of host principals:     $host_ctr\n";
+print MAIL "Total number of irg principals:      $irg_ctr\n";
+print MAIL "Total number of wifi principals:     $wifi_ctr\n";
+print MAIL "Total number of bw principals:       $bw_ctr\n";
+print MAIL "Total number of wiki principals:     $wiki_ctr\n";
+print MAIL "Total number of principals skipped:  $skip_ctr\n";
+print MAIL "\n";
+#print MAIL "Number of principals who have never changed their password since migration: $afs_krb5_ctr\n";
+print MAIL "Number of principals who have never changed their password:  $never_ctr\n";
+#print MAIL "Number of new principals:  $new_acct_ctr\n";
+#print MAIL "Number of principals with recent dflts:  $recent_dflt_ctr\n";
+#print MAIL "Number of principals whose password is 1 year or older:      $year_old_ctr\n";
+print MAIL "Number of principals who are disallowed tickets: $disallow_ctr\n";
+print MAIL "Number of principals who require a password change: $expired_ctr\n";
+print MAIL "\n";
+
+# List new principals added
+print MAIL "\n";
+print MAIL "New principals added:\n";
+foreach $fdiff (@diffs) {
+    if ($fdiff =~ />(.*)/) {
+        print MAIL "$1\n";
+    }
+}
+
+# List new principals removed
+print MAIL "\n";
+print MAIL "Principals removed:\n";
+foreach $fdiff (@diffs) {
+    if ($fdiff =~ /<(.*)/) {
+        print MAIL "$1\n";
+    }
+}
+print MAIL "\n\n";
+
+# List principals who will expire in x days
+foreach $dayx (@days_to_check) {
+    ListUsers($dayx,MAIL);
+}
+
+#print MAIL "\n\nNever but not new?:\n";
+#foreach $blaa (@nevernotnew){
+#    print MAIL "$blaa\n";
+#}
+
+#print MAIL "\n\nNever changed users:\n";
+#foreach $blaa (@neverusers){
+#    print MAIL "$blaa\n";
+#}
+
+print MAIL "\n\n\n";
+print MAIL "This output is from the $0 script running on $localhost\n";
+
+close(MAIL);
+
+
+#
+# DateCheck
+#
+
+sub DateCheck {
+    local ($days_check) = @_;
+
+    # Check for principals who will expire in x days
+    if ((($year_ago + ($days_check * $sec_in_day)) > $ptime) && ((($year_ago + (($days_check - 1) * $sec_in_day))) < $ptime)) {
+        $userlist{$user} = $days_check;
+    }
+
+}
+
+sub DateCheckNewAcct {
+    local ($days_check) = @_;
+
+    if ((($fiveweeks_ago + ($days_check * $sec_in_day)) > $ptime) && ((($fiveweeks_ago + (($days_check - 1) * $sec_in_day))) < $ptime)) {
+        $userlist{$user} = $days_check;
+    }    
+}
+
+sub DateCheckDflt {
+    local ($days_check) = @_;
+
+    if ((($dfltdays_ago + ($days_check * $sec_in_day)) > $ptime) && ((($dfltdays_ago + (($days_check - 1) * $sec_in_day))) < $ptime)) {
+
+# add to this list or a different one with a whole new email to the user?
+        $userlist{$user} = $days_check;
+
+    }    
+}
+
+
+#
+# ListUsers
+#
+
+sub ListUsers {
+    local ($day,$fh) = @_;
+    local @exp_users=();
+
+    my $dctr = 0;
+    foreach $userp (keys %userlist) {
+        if ($userlist{$userp} == $day) {
+            $dctr++;
+            push (@exp_users, $userp);
+            if ($day == 0) {
+                ExpirePassword($userp);
+            } else {
+                NotifyUser($userp,$day);
+            }
+        }
+    }
+    if ($day == 0) {
+        print $fh "Principals whose password we are expiring: $dctr\n";
+    } else {
+        print $fh "Principals whose password will expire in $day days: $dctr\n";
+    }
+    foreach $u (@exp_users) {
+        print $fh "$u\n";
+    }
+    print $fh "\n";
+
+}
+
+
+#
+# NotifyUser
+#
+
+sub NotifyUser {
+    local ($user,$day) = @_;
+    local $expire_subject;
+
+    $expire_subject = "Notice: Password is going to expire";
+
+    if($user =~ /(\S+)\@NCSA\.EDU/){
+	$short = $1;
+	$user = $short."\@ncsa.illinois.edu";
+    }
+
+    open (MAILUSER, "| /usr/lib/sendmail -t -n -f security\@ncsa.illinois.edu") || die "Cannot find /usr/lib/sendmail: $!\n";
+
+    print MAILUSER "To: $user\n";
+    print MAILUSER "Reply-To: help\@ncsa.illinois.edu\n";
+    print MAILUSER "Subject: $expire_subject\n\n";
+
+    if($day == 30){
+    open (NOTICE, "/afs/ncsa/projects/kerberos/scripts/krb5_db_check/notice-30days.asc")|| die "Cannot find notice-30days.asc: $!\n";
+    } elsif($day == 14){
+    open (NOTICE, "/afs/ncsa/projects/kerberos/scripts/krb5_db_check/notice-14days.asc")|| die "Cannot find notice-14days.asc: $!\n";
+    } elsif($day == 7){
+    open (NOTICE, "/afs/ncsa/projects/kerberos/scripts/krb5_db_check/notice-7days.asc")|| die "Cannot find notice-7days.asc: $!\n";
+    } elsif($day == 3){
+    open (NOTICE, "/afs/ncsa/projects/kerberos/scripts/krb5_db_check/notice-3days.asc")|| die "Cannot find notice-3days.asc: $!\n";
+    } else {
+    open (NOTICE, "/afs/ncsa/projects/kerberos/scripts/krb5_db_check/notice-1day.asc")|| die "Cannot find notice-1day.asc: $!\n";
+    }
+
+    @notice = <NOTICE>;
+
+    foreach $line (@notice){
+         print MAILUSER "$line";
+    }
+
+    close(NOTICE);
+    close(MAILUSER);
+}
+
+
+#
+# ExpirePassword
+#
+
+sub ExpirePassword {
+    local ($user) = @_;
+
+#    system ("$kadmin_dir/kadmin -p kadmin/admin -k -t /usr/local/krb5kdc/kadm5.keytab -q \"modprinc +needchange $user\"") || die "Could not run kadmin.local modprinc $!\n";
+#    system ("$kadmin_dir/kadmin -p kadmin/admin -k -t /usr/local/krb5kdc/kadm5.keytab -q \"modprinc +needchange $user\"");
+    system ("$kadmin_dir/kadmin.local -q \"modprinc +needchange $user\"");
+
+}
+

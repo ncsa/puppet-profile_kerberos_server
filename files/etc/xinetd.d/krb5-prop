@@ -1,0 +1,11 @@
+service krb5_prop
+{
+        flags           = REUSE
+        socket_type     = stream
+        wait            = no
+        user            = root
+        server          = /usr/sbin/kpropd
+        server_args     = -d -p /usr/sbin/kdb5_util
+        log_on_failure  += USERID
+        disable         = no
+}

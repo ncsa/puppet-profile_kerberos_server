@@ -1,0 +1,115 @@
+#!/usr/bin/perl -w
+#
+# mv_krb5_log
+#
+#   Script to roll over current kerberos log and move it out to AFS.
+#   Do not run this more frequently that once a day from cron, otherwise
+#   there will be file name extension problems (currently in yyyymmdd format).
+#
+
+use strict;
+use Mail::Send;
+use Sys::Hostname;
+
+my $DIR = "/var/log";
+my $LOGDIR = "/afs/ncsa/projects/kerberos/logs/krb5";
+
+my $MAILTO = "kerberos-admin\@ncsa.uiuc.edu";
+
+my $pidfile = "/var/run/syslogd.pid";
+
+# Get the localhost name
+my ($hostname) = split(/\./,hostname());
+
+#make the time extension for the new file
+my ( $mday, $mon, $year )= ( localtime(time) )[3..5];
+$mon++;
+$year += 1900;
+
+if ($mon/10 < 1){$mon = "0".$mon;}
+if ($mday/10 < 1){$mday = "0".$mday;}
+
+my $ext = $year.$mon.$mday;
+
+my $new = "$hostname.krb5." . $ext;
+
+if (-e "$DIR/$new") {
+    &mail_err("krb5.log was not moved", "$DIR/$new already existed, did not overwrite the file.\n");
+    exit;
+}
+
+system("mv $DIR/krb5.log $DIR/$new");
+
+sleep(30);
+
+if (!(-e "$DIR/$new")) {
+    &mail_err("krb5.log move error", "$DIR/$new could not be created from $DIR/krb5.log\n");  
+    exit;
+}
+
+if (-e "$DIR/krb5.log") {
+    &mail_err("krb5.log error", "$DIR/krb5.log could not be moved to $DIR/$new");
+    exit;
+}
+
+my $pid;
+if (-e "$pidfile") {
+    open (PID, "$pidfile");
+    $pid = <PID>;
+} else {
+    &mail_err("krb5.log error", "Could not find file: $pidfile.");
+    exit;
+}
+
+system ("kill -HUP $pid");
+
+sleep (3);
+
+#if (!(-e "$DIR/krb5.log")) {
+    #&mail_err("krb5.log error", "$DIR/krb5.log was not created when kill -HUP was executed");
+    #exit;
+#}
+#
+if (-e "$LOGDIR/$new") {
+    mail_err("$new already exists in afs", "$LOGDIR/$new already exists $DIR/$new was not moved");
+    exit;
+}
+
+system ("cp $DIR/$new $LOGDIR/$new");
+
+if (!(-e "$LOGDIR/$new")) {
+    mail_err("Error copying $new", "$DIR/$new was not copied to $LOGDIR/$new");
+    exit;
+}
+
+my $flag_diff = system("diff $DIR/$new $LOGDIR/$new");
+
+if ($flag_diff != 0){
+    mail_err("Error copying $new", "$DIR/$new was not correctly copied to $LOGDIR/$new. There are differences between files.");
+    exit;
+}
+
+system("rm $DIR/$new");
+
+#
+# mail_err
+#
+# Mails error messages to users in the $MAILTO list.
+#
+
+sub mail_err {
+    my $subj = shift @_;
+    my $str = shift @_;
+    my $cnt = shift @_;
+    
+    my $msg = new Mail::Send;
+    $msg->to($MAILTO);
+    $msg->subject($subj);
+    my $fh = $msg->open;
+    print $fh localtime(time) . "\n";
+    print $fh $str;
+    print $fh "\n\n";
+    print $fh "This is the $0 script that rolls over the kerberos log on $hostname.\n";
+    $fh->close;
+}
+
