@@ -9,14 +9,14 @@ class profile_kerberos_server::firewall (
   String $primary_server,
 ) {
 
-  firewall { '1000 Kerberos krb5_prop via TCP':
+  firewall { '200 Kerberos krb5_prop via TCP':
     proto  => 'tcp',
     dport  => 'krb5_prop',
     source => $primary_server,
     action => 'accept',
   }
 
-  firewall { '1010 Kerberos via TCP':
+  firewall { '210 Kerberos via TCP':
     proto  => 'tcp',
     dport  => [
       'kerberos',
@@ -24,7 +24,7 @@ class profile_kerberos_server::firewall (
     action => 'accept',
   }
 
-  firewall { '1011 Kerberos via UDP':
+  firewall { '211 Kerberos via UDP':
     proto  => 'udp',
     dport  => [
       'kerberos',
