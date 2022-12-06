@@ -33,10 +33,15 @@ class profile_kerberos_server::services (
     mode   => '0644',
   }
 
-  file { '/etc/rsyslog.d/rsyslog-kdc.conf':
-    source => "puppet:///modules/${module_name}/etc/rsyslog.d/rsyslog-kdc.conf",
-    mode   => '0644',
-  }
+# THE rsyslog CONFIG RULES SHOULD BE ADDED VIA UPDATING HIERA DATA FOR THE KERBEROS ROLE
+#   I.E. profile_rsyslog::config_rulesets
+#  file { '/etc/rsyslog.d/rsyslog-kdc.conf':
+#    source => "puppet:///modules/${module_name}/etc/rsyslog.d/rsyslog-kdc.conf",
+#    mode   => '0644',
+#    notify => [
+#      Service['rsyslog'],
+#    ],
+#  }
 
   service { 'xinetd':
     ensure => running,

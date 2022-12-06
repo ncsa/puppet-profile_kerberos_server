@@ -61,11 +61,17 @@ class profile_kerberos_server::scripts {
   file { '/var/kerberos/krb5kdc/kdc.conf':
     source => "puppet:///modules/${module_name}/var/kerberos/krb5kdc/kdc.conf",
     mode   => '0600',
+    notify => [
+      Service['krb5kdc'],
+    ],
   }
 
   file { '/var/kerberos/krb5kdc/kpropd.acl':
     source => "puppet:///modules/${module_name}/var/kerberos/krb5kdc/kpropd.acl",
     mode   => '0644',
+    notify => [
+      Service['krb5kdc'],
+    ],
   }
 
   ## Copy over scripts run at startup and scripts run by cron.
