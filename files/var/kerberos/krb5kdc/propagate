@@ -1,0 +1,261 @@
+#!/bin/sh
+set -x
+######################################################################
+#
+# propagate
+#
+# Propagtes Kerberos DB to any slaves that need it. It will take
+# a list of slave KDCs from the command line if given, otherwise
+# it reads them from the file "slave_kdcs".
+#
+# $Header: /afs/ncsa/src/kerberos/scripts/RCS/propagate,v 1.8 1998/04/13 22:12:08 vwelch Exp $
+#
+######################################################################
+
+# Kerberos Install Directory
+krb_dir="/usr"
+
+# KDC Directory
+kdc_dir="/var/kerberos/krb5kdc"
+
+# File containing names of slave KDC
+slave_kdc_file=$kdc_dir"/slave_kdcs"
+
+# Tempory file to hold database
+temp_db=$kdc_dir"/to_slaves"
+
+# Kerberos DB file
+db_file=$kdc_dir"/principal"
+
+# Paths to binaries
+kdb5_util=$krb_dir"/sbin/kdb5_util"
+kprop=$krb_dir"/sbin/kprop"
+
+# Tag for logging
+log_tag="KDC_Propagation"
+
+# Logging facility
+log_facility="local6"
+
+# Temporary log file
+log_file="/tmp/propagate.$$"
+
+# User to send errors to
+user="kerberos-admin@ncsa.illinois.edu"
+
+# Uncomment for testing
+#user="lindsey@ncsa.uiuc.edu"
+
+######################################################################
+#
+# Subroutines
+#
+
+# Cleanup
+cleanup()
+{
+  rm -f $log_file
+  echo $logfile
+}
+
+# Put something in the syslog
+do_syslog()
+{
+  priority=$1
+  shift
+
+  logger -p $log_facility.$priority -t $log_tag $*
+}
+
+# Put something in the log file
+do_log()
+{
+  echo $* >> $log_file
+}
+
+# Run a command, putting output to the file file
+cmd_log()
+{
+  $* >> $log_file 2>&1
+}
+
+# Handle an error message
+error()
+{
+  do_syslog "err" $*
+
+  do_log $*
+}
+
+# Handle an error and exit
+error_exit()
+{
+  do_syslog "err" $*
+
+  do_log $*
+
+  mail_log
+
+  cleanup
+
+  exit 1
+}
+
+# Handle an informative message
+message()
+{
+  do_syslog "info" $*
+
+  do_log $*
+}
+
+# Mail log
+mail_log()
+{
+  cat $log_file | /bin/mail -s "Kerberos Propagation Report" $user
+}
+
+
+######################################################################
+
+do_log
+do_log Output from Kerberos KDC propagation script
+do_log  $0
+cmd_log date
+do_log
+
+
+message "Running"
+do_log "--------------------------"
+
+#
+# Get list of slave KDCS (if not given on command line)
+#
+if [ $# -eq 0 ]; then
+
+  do_log "Reading list of Slave KDCs from $slave_kdc_file"
+
+  if [ ! -r $slave_kdc_file ]; then
+    error_exit "Can't get list of slave KDCs. Cannot read file $slave_kdc_file"
+  fi
+
+  slave_kdcs=`cat $slave_kdc_file`
+
+  if [ $? -ne 0 ]; then
+    error_exit "Error reading $slave_kdc_file. Aborting."
+  fi
+else
+  slave_kdcs=$*
+  do_log "Using list giving on command line"
+fi
+
+do_log "Slave KDCs are: $slave_kdcs"
+
+#
+# Check to see if propagation is needed to any of the slaves by
+# comparing the timestamps on files.
+#
+
+do_log "Checking to see which slaves need propagation..."
+
+for slave in $slave_kdcs ; do
+  # This file is created when a successful propagation is done
+  # to the slave
+  slave_prop_file=$temp_db"."$slave".last_prop"
+
+  if [ -f $slave_prop_file ]; then
+    # Compare file to DB and see if it's older
+    newer=`find $db_file -newer $slave_prop_file -print`
+    if [ -n "$newer" ]; then
+      # DB is newer - propagate to this slave
+      do_slaves="$do_slaves $slave"
+    fi
+  else
+    # Last prop file doesn't exist. Hmm, do prop anyways.
+    do_slaves="$do_slaves $slave"
+  fi
+done
+
+#
+# Ok, $do_slaves now contains a list of all slaves to propagate to
+#
+
+if [ -n "$do_slaves" ]; then
+
+  message "The following slaves need propagation: $do_slaves"
+
+  #
+  # Check to make sure executables are present before begining
+  #
+  if [ ! -x $kdb5_util ]; then
+    error_exit "Can't access $kdb5_util. Aborting."
+  fi
+
+  if [ ! -x $kprop ]; then
+    error_exit "Can't access $kprop. Aborting."
+  fi
+
+  #
+  # Do it
+  #
+  do_log "Dumping database..."
+  cmd_log $kdb5_util dump $temp_db
+
+  if [ $? -ne 0 ]; then
+    error_exit "Error dumping database. Aborting.";
+  fi
+
+  do_mail=0
+
+  for kdc in $do_slaves ; do
+
+    # File indicating an error in last propagation
+    error_file=$temp_db"."$kdc".error_in_last_prop"
+
+    do_log "Propagating to $kdc"
+    cmd_log $kprop -f $temp_db $kdc
+
+    if [ $? -eq 0 ]; then
+      message "Successful propagation to $kdc."
+
+      if [ -f $error_file ]; then
+        # Last attempt was an error, so send email and remove error file
+        rm -f $error_file
+        do_mail=1
+      fi
+    else
+      # Unfortunataly this isn't fullproof. kprop doesn't always return
+      # non-zero on error.
+      error "Error detected propagating to $kdc."
+
+      if [ ! -f $error_file ]; then
+        # Last attempt was not an error, so create error file and send email
+        touch $error_file
+        do_mail=1
+      fi
+    fi
+  done
+
+  if [ $do_mail -eq 1 ]; then
+    do_syslog "info" "Exiting. Sending email to $user"
+    mail_log
+    cleanup
+    exit 1
+  fi
+
+else
+  # Nothing to do
+  message "No slaves need propagation."
+fi
+
+message "Exiting"
+do_log "--------------------------"
+
+cleanup
+
+exit 0
+
+#
+# END
+#
+######################################################################

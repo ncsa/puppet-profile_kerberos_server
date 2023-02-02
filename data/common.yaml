@@ -1,7 +1,7 @@
 ---
-profile_kerberos_server::firewall::primary_server: "brick.ncsa.uiuc.edu"
+profile_kerberos_server::primary_server: "ncsa-krb-0.ncsa.illinois.edu"
 
-profile_kerberos_server::services::packages_absent:
+profile_kerberos_server::common::services::packages_absent:
   - "avahi"
   - "avahi-autoipd"
   - "NetworkManager"
@@ -12,7 +12,7 @@ profile_kerberos_server::services::packages_absent:
   - "NetworkManager-tui"
   - "NetworkManager-wifi"
   - "NetworkManager-wwan"
-profile_kerberos_server::services::packages_present:
+profile_kerberos_server::common::services::packages_present:
   - "bind-utils"
   - "cracklib-devel"
   - "krb5-server"

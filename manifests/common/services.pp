@@ -7,8 +7,9 @@
 #   List of packages to ensure present
 #
 # @example
-#   include profile_kerberos_server::services
-class profile_kerberos_server::services (
+#   include profile_kerberos_server::common::services
+#
+class profile_kerberos_server::common::services (
   Array[String] $packages_absent,
   Array[String] $packages_present,
 ) {
@@ -16,21 +17,9 @@ class profile_kerberos_server::services (
   ensure_packages($packages_present, {'ensure' => 'present'})
   ensure_packages($packages_absent, {'ensure' => 'absent'})
 
-#NOTE:  This class' configuration of hosts.allow and hosts.deny could conflict with other
-#       definitions for them in other classes.
-  file { '/etc/hosts.allow':
-    source => "puppet:///modules/${module_name}/etc/hosts.allow",
-    mode   => '0644',
-  }
-
-  file { '/etc/hosts.deny':
-    source => "puppet:///modules/${module_name}/etc/hosts.deny",
-    mode   => '0644',
-  }
-
-  file { '/etc/xinetd.d/krb5-prop':
-    source => "puppet:///modules/${module_name}/etc/xinetd.d/krb5-prop",
-    mode   => '0644',
+  service { 'krb5kdc':
+    ensure => running,
+    enable => true,
   }
 
 # THE rsyslog CONFIG RULES SHOULD BE ADDED VIA UPDATING HIERA DATA FOR THE KERBEROS ROLE
@@ -43,14 +32,5 @@ class profile_kerberos_server::services (
 #    ],
 #  }
 
-  service { 'xinetd':
-    ensure => running,
-    enable => true,
-  }
-
-  service { 'krb5kdc':
-    ensure => running,
-    enable => true,
-  }
 
 }
