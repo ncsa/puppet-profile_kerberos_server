@@ -5,7 +5,7 @@
 #
 class profile_kerberos_server::secondary::config {
 
-  # make sure kadm5.acl is empty so we don't accidentally write to a secondary KDC database
+  # make sure kadm5.acl doesn't exist so we don't accidentally write to a secondary KDC database
   file { 'secondary-/var/kerberos/krb5kdc/kadm5.acl':
     ensure => 'absent',
     path   => '/var/kerberos/krb5kdc/kadm5.acl',

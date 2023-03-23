@@ -7,9 +7,7 @@
 #
 #   include profile_kerberos_server::secondary
 #
-class profile_kerberos_server (
-  String $primary_server,
-) {
+class profile_kerberos_server {
 
   $notify_text = @("EOT"/)
     The top level profile_backup class should not be used.

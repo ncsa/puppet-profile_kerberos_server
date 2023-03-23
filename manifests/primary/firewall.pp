@@ -5,14 +5,14 @@
 #
 class profile_kerberos_server::primary::firewall {
 
-  # This should be port 464 and 749
+  # This should be kadmin and kpasswd
   ['tcp','udp'].each |$protocol| {
 
     firewall { "212 Kerberos via ${protocol}":
       proto  => $protocol,
       dport  => [
-        'kadmin',
-        'kpasswd',
+        '464',
+        '749',
       ],
       action => 'accept',
     }
