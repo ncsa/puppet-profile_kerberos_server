@@ -20,3 +20,6 @@ profile_kerberos_server::common::services::packages_present:
   - "perl-MailTools"
   - "tcp_wrappers"
   - "xinetd"
+  - "mailx"
+
+profile_kerberos_server::primary::config::kadm_acl_contents: ""

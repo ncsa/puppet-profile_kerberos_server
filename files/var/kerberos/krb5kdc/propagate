@@ -112,7 +112,7 @@ message()
 # Mail log
 mail_log()
 {
-  cat $log_file | /bin/mail -s "Kerberos Propagation Report" $user
+  cat $log_file | /bin/Mail -s "Kerberos Propagation Report" $user
 }
 
 

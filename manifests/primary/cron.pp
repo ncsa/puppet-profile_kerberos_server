@@ -8,7 +8,7 @@ class profile_kerberos_server::primary::cron {
   # Propagate the database to secondary KDCs every five minutes
   # */5 * * * * /var/kerberos/krb5kdc/propagate
   cron { 'propagate':
-    command     => '/var/kerberos/krb5kdc/propagate',
+    command     => '/var/kerberos/krb5kdc/propagate > /dev/null 2>&1',
     user        => 'root',
     hour        => '*',
     minute      => '*/5',
