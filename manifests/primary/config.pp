@@ -4,13 +4,13 @@
 #   include profile_kerberos_server::primary::config
 #
 class profile_kerberos_server::primary::config (
-   String $kadm_acl_contents,
+  String $kadm_acl_contents,
 ) {
 
   file { '/var/kerberos/krb5kdc/kadm5.acl':
     content => $kadm_acl_contents,
-    mode   => '0600',
-    notify => [
+    mode    => '0600',
+    notify  => [
       Service['krb5kdc'],
     ],
   }
