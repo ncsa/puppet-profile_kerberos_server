@@ -13,9 +13,8 @@ class profile_kerberos_server::common::services (
   Array[String] $packages_absent,
   Array[String] $packages_present,
 ) {
-
-  ensure_packages($packages_present, {'ensure' => 'present'})
-  ensure_packages($packages_absent, {'ensure' => 'absent'})
+  ensure_packages($packages_present, { 'ensure' => 'present' })
+  ensure_packages($packages_absent, { 'ensure' => 'absent' })
 
   service { 'krb5kdc':
     ensure => running,
@@ -31,6 +30,4 @@ class profile_kerberos_server::common::services (
 #      Service['rsyslog'],
 #    ],
 #  }
-
-
 }

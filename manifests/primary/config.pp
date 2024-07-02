@@ -6,7 +6,6 @@
 class profile_kerberos_server::primary::config (
   String $kadm_acl_contents,
 ) {
-
   file { '/var/kerberos/krb5kdc/kadm5.acl':
     content => $kadm_acl_contents,
     mode    => '0600',
@@ -19,5 +18,4 @@ class profile_kerberos_server::primary::config (
     ensure => 'absent',
     path   => '/var/kerberos/krb5kdc/kpropd.acl',
   }
-
 }
