@@ -4,7 +4,6 @@
 #   include profile_kerberos_server::secondary::config
 #
 class profile_kerberos_server::secondary::config {
-
   # make sure kadm5.acl doesn't exist so we don't accidentally write to a secondary KDC database
   file { 'secondary-/var/kerberos/krb5kdc/kadm5.acl':
     ensure => 'absent',
@@ -20,5 +19,4 @@ class profile_kerberos_server::secondary::config {
       Service['krb5kdc'],
     ],
   }
-
 }

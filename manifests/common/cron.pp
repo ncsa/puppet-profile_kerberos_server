@@ -4,7 +4,6 @@
 #   include profile_kerberos_server::common::cron
 #
 class profile_kerberos_server::common::cron {
-
 # Make daily backup of propagated database on local disk
 # 03 04 * * * /root/cron_scripts/krb5_ss_backup.pl
   cron { 'ss_backup':
@@ -37,5 +36,4 @@ class profile_kerberos_server::common::cron {
     environment => ['SHELL=/bin/sh', 'MAILTO=kerberos-admin@ncsa.uiuc.edu'],
     #description => 'Roll the syslogs to AFS'
   }
-
 }

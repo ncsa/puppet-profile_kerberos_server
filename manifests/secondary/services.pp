@@ -4,7 +4,6 @@
 #   include profile_kerberos_server::secondary::services
 #
 class profile_kerberos_server::secondary::services {
-
   # NOTE:  This class' configuration of hosts.allow and hosts.deny could conflict with other
   #       definitions for them in other classes.
   file { '/etc/hosts.allow':
@@ -30,5 +29,4 @@ class profile_kerberos_server::secondary::services {
   service { 'kadmin':
     ensure => 'stopped',
   }
-
 }

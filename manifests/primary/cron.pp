@@ -4,7 +4,6 @@
 #   include profile_kerberos_server::primary::cron
 #
 class profile_kerberos_server::primary::cron {
-
   # Propagate the database to secondary KDCs every five minutes
   # */5 * * * * /var/kerberos/krb5kdc/propagate
   cron { 'propagate':
@@ -39,5 +38,4 @@ class profile_kerberos_server::primary::cron {
     environment => ['SHELL=/bin/sh', 'MAILTO=kerberos-admin@ncsa.uiuc.edu'],
     #description => 'Put principal information into MySQL database'
   }
-
 }

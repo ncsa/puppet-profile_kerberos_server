@@ -8,7 +8,6 @@
 #   include profile_kerberos_server::secondary
 #
 class profile_kerberos_server {
-
   $notify_text = @("EOT"/)
     The top level profile_backup class should not be used.
     Instead use one of the following classes:
@@ -31,5 +30,4 @@ class profile_kerberos_server {
   # is the 'crontab' file in root up-to-date
   # do we want /var/kerberos/krb5kdc/mysql/insert.pl
   # create a service for watchlogins.pl
-
 }

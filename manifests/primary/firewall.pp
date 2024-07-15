@@ -3,8 +3,9 @@
 # @example
 #   include profile_kerberos_server::primary::firewall
 #
-class profile_kerberos_server::primary::firewall {
-
+class profile_kerberos_server::primary::firewall (
+  Array[String, 1] $kadmin_allow_cidr,
+) {
   # kpasswd
   ['tcp','udp'].each |$protocol| {
     firewall { "212 kpasswd ${protocol}":
@@ -15,18 +16,12 @@ class profile_kerberos_server::primary::firewall {
   }
 
   # kadmin
-  [
-    '141.142.0.0/16',
-    '10.142.0.0/16',
-    '172.24.0.0/13',
-    '172.16.0.0/13'
-  ].each |$range| {
-    firewall { "213 kerberos-adm tcp ${range}":
-      source => $range,
+  $kadmin_allow_cidr.each |$cidr| {
+    firewall { "213 kerberos-adm tcp ${cidr}":
+      source => $cidr,
       proto  => 'tcp',
       dport  => '749',
       action => 'accept',
     }
   }
-
 }

@@ -4,7 +4,6 @@
 #   include profile_kerberos_server::secondary::firewall
 #
 class profile_kerberos_server::secondary::firewall {
-
   $primary_server = lookup('profile_kerberos_server::primary_server')
 
   # this should be port 754
@@ -14,5 +13,4 @@ class profile_kerberos_server::secondary::firewall {
     source => $primary_server,
     action => 'accept',
   }
-
 }

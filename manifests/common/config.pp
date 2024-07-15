@@ -4,7 +4,6 @@
 #   include profile_kerberos_server::common::config
 #
 class profile_kerberos_server::common::config {
-
   ## Copy over the kerberos server configuration files (NOT .k5.NCSA.EDU, it must be hand copied)
   file { '/var/kerberos/krb5kdc/':
     ensure => 'directory',
@@ -30,5 +29,4 @@ class profile_kerberos_server::common::config {
       Service['krb5kdc'],
     ],
   }
-
 }

@@ -4,7 +4,6 @@
 #   include profile_kerberos_server::common::scripts
 #
 class profile_kerberos_server::common::scripts {
-
   file { '/root/cron_scripts/krb5_passwd_check':
     source => "puppet:///modules/${module_name}/root/cron_scripts/krb5_passwd_check",
     mode   => '0755',
@@ -39,5 +38,4 @@ class profile_kerberos_server::common::scripts {
     source => "puppet:///modules/${module_name}/root/cron_scripts/watchlogins.pl",
     mode   => '0700',
   }
-
 }
