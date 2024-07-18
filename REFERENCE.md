@@ -7,9 +7,23 @@
 ### Classes
 
 * [`profile_kerberos_server`](#profile_kerberos_server): Configure an Kerberos server for use at NCSA
-* [`profile_kerberos_server::firewall`](#profile_kerberos_serverfirewall): Configure firewall rules for Kerberos services
-* [`profile_kerberos_server::scripts`](#profile_kerberos_serverscripts): Configure scripts for Kerberos services
-* [`profile_kerberos_server::services`](#profile_kerberos_serverservices): Configure services for Kerberos server
+* [`profile_kerberos_server::common`](#profile_kerberos_server--common): Configure an Kerberos server for use at NCSA
+* [`profile_kerberos_server::common::config`](#profile_kerberos_server--common--config): common Kerberos configuration files
+* [`profile_kerberos_server::common::cron`](#profile_kerberos_server--common--cron): common Kerberos crontab entries
+* [`profile_kerberos_server::common::firewall`](#profile_kerberos_server--common--firewall): Configure firewall rules for Kerberos services
+* [`profile_kerberos_server::common::scripts`](#profile_kerberos_server--common--scripts): Configure scripts for Kerberos services
+* [`profile_kerberos_server::common::services`](#profile_kerberos_server--common--services): Configure services for Kerberos server
+* [`profile_kerberos_server::primary`](#profile_kerberos_server--primary): Configure an Kerberos server for use at NCSA
+* [`profile_kerberos_server::primary::config`](#profile_kerberos_server--primary--config): Kerberos configuration files for primary KDCs
+* [`profile_kerberos_server::primary::cron`](#profile_kerberos_server--primary--cron): Kerberos primary KDC cron entries
+* [`profile_kerberos_server::primary::firewall`](#profile_kerberos_server--primary--firewall): Configure firewall rules for Kerberos services
+* [`profile_kerberos_server::primary::scripts`](#profile_kerberos_server--primary--scripts): Configure scripts for Kerberos services
+* [`profile_kerberos_server::primary::services`](#profile_kerberos_server--primary--services): Configure services for Kerberos server
+* [`profile_kerberos_server::secondary`](#profile_kerberos_server--secondary): Configure an Kerberos server for use at NCSA
+* [`profile_kerberos_server::secondary::config`](#profile_kerberos_server--secondary--config): Kerberos configuration files for secondary KDCs
+* [`profile_kerberos_server::secondary::firewall`](#profile_kerberos_server--secondary--firewall): Configure firewall rules for Kerberos services
+* [`profile_kerberos_server::secondary::scripts`](#profile_kerberos_server--secondary--scripts): Configure scripts for Kerberos services
+* [`profile_kerberos_server::secondary::services`](#profile_kerberos_server--secondary--services): Configure services for Kerberos server
 
 ## Classes
 
@@ -22,10 +36,50 @@ Configure an Kerberos server for use at NCSA
 ##### 
 
 ```puppet
-include profile_kerberos_server
+include profile_kerberos_server::primary
+
+- OR -
+
+include profile_kerberos_server::secondary
 ```
 
-### <a name="profile_kerberos_serverfirewall"></a>`profile_kerberos_server::firewall`
+### <a name="profile_kerberos_server--common"></a>`profile_kerberos_server::common`
+
+Configure an Kerberos server for use at NCSA
+
+#### Examples
+
+##### 
+
+```puppet
+include profile_kerberos_server::common
+```
+
+### <a name="profile_kerberos_server--common--config"></a>`profile_kerberos_server::common::config`
+
+common Kerberos configuration files
+
+#### Examples
+
+##### 
+
+```puppet
+include profile_kerberos_server::common::config
+```
+
+### <a name="profile_kerberos_server--common--cron"></a>`profile_kerberos_server::common::cron`
+
+common Kerberos crontab entries
+
+#### Examples
+
+##### 
+
+```puppet
+include profile_kerberos_server::common::cron
+```
+
+### <a name="profile_kerberos_server--common--firewall"></a>`profile_kerberos_server::common::firewall`
 
 Configure firewall rules for Kerberos services
 
@@ -34,22 +88,10 @@ Configure firewall rules for Kerberos services
 ##### 
 
 ```puppet
-include profile_kerberos_server::firewall
+include profile_kerberos_server::common::firewall
 ```
 
-#### Parameters
-
-The following parameters are available in the `profile_kerberos_server::firewall` class:
-
-* [`primary_server`](#primary_server)
-
-##### <a name="primary_server"></a>`primary_server`
-
-Data type: `String`
-
-FQDN of primary kerberos server
-
-### <a name="profile_kerberos_serverscripts"></a>`profile_kerberos_server::scripts`
+### <a name="profile_kerberos_server--common--scripts"></a>`profile_kerberos_server::common::scripts`
 
 Configure scripts for Kerberos services
 
@@ -58,10 +100,10 @@ Configure scripts for Kerberos services
 ##### 
 
 ```puppet
-include profile_kerberos_server::scripts
+include profile_kerberos_server::common::scripts
 ```
 
-### <a name="profile_kerberos_serverservices"></a>`profile_kerberos_server::services`
+### <a name="profile_kerberos_server--common--services"></a>`profile_kerberos_server::common::services`
 
 Configure services for Kerberos server
 
@@ -70,25 +112,181 @@ Configure services for Kerberos server
 ##### 
 
 ```puppet
-include profile_kerberos_server::services
+include profile_kerberos_server::common::services
 ```
 
 #### Parameters
 
-The following parameters are available in the `profile_kerberos_server::services` class:
+The following parameters are available in the `profile_kerberos_server::common::services` class:
 
-* [`packages_absent`](#packages_absent)
-* [`packages_present`](#packages_present)
+* [`packages_absent`](#-profile_kerberos_server--common--services--packages_absent)
+* [`packages_present`](#-profile_kerberos_server--common--services--packages_present)
 
-##### <a name="packages_absent"></a>`packages_absent`
+##### <a name="-profile_kerberos_server--common--services--packages_absent"></a>`packages_absent`
 
 Data type: `Array[String]`
 
 List of packages to ensure absent
 
-##### <a name="packages_present"></a>`packages_present`
+##### <a name="-profile_kerberos_server--common--services--packages_present"></a>`packages_present`
 
 Data type: `Array[String]`
 
 List of packages to ensure present
+
+### <a name="profile_kerberos_server--primary"></a>`profile_kerberos_server::primary`
+
+Configure an Kerberos server for use at NCSA
+
+#### Examples
+
+##### 
+
+```puppet
+include profile_kerberos_server::primary
+```
+
+### <a name="profile_kerberos_server--primary--config"></a>`profile_kerberos_server::primary::config`
+
+Kerberos configuration files for primary KDCs
+
+#### Examples
+
+##### 
+
+```puppet
+include profile_kerberos_server::primary::config
+```
+
+#### Parameters
+
+The following parameters are available in the `profile_kerberos_server::primary::config` class:
+
+* [`kadm_acl_contents`](#-profile_kerberos_server--primary--config--kadm_acl_contents)
+
+##### <a name="-profile_kerberos_server--primary--config--kadm_acl_contents"></a>`kadm_acl_contents`
+
+Data type: `String`
+
+the entire contents of the kadm5.acl file
+
+### <a name="profile_kerberos_server--primary--cron"></a>`profile_kerberos_server::primary::cron`
+
+Kerberos primary KDC cron entries
+
+#### Examples
+
+##### 
+
+```puppet
+include profile_kerberos_server::primary::cron
+```
+
+### <a name="profile_kerberos_server--primary--firewall"></a>`profile_kerberos_server::primary::firewall`
+
+Configure firewall rules for Kerberos services
+
+#### Examples
+
+##### 
+
+```puppet
+include profile_kerberos_server::primary::firewall
+```
+
+#### Parameters
+
+The following parameters are available in the `profile_kerberos_server::primary::firewall` class:
+
+* [`kadmin_allow_cidr`](#-profile_kerberos_server--primary--firewall--kadmin_allow_cidr)
+
+##### <a name="-profile_kerberos_server--primary--firewall--kadmin_allow_cidr"></a>`kadmin_allow_cidr`
+
+Data type: `Array[String, 1]`
+
+CIDR to allow kadmin access to in firewall
+
+### <a name="profile_kerberos_server--primary--scripts"></a>`profile_kerberos_server::primary::scripts`
+
+Configure scripts for Kerberos services
+
+#### Examples
+
+##### 
+
+```puppet
+include profile_kerberos_server::primary::scripts
+```
+
+### <a name="profile_kerberos_server--primary--services"></a>`profile_kerberos_server::primary::services`
+
+Configure services for Kerberos server
+
+#### Examples
+
+##### 
+
+```puppet
+include profile_kerberos_server::primary::services
+```
+
+### <a name="profile_kerberos_server--secondary"></a>`profile_kerberos_server::secondary`
+
+Configure an Kerberos server for use at NCSA
+
+#### Examples
+
+##### 
+
+```puppet
+include profile_kerberos_server::secondary
+```
+
+### <a name="profile_kerberos_server--secondary--config"></a>`profile_kerberos_server::secondary::config`
+
+Kerberos configuration files for secondary KDCs
+
+#### Examples
+
+##### 
+
+```puppet
+include profile_kerberos_server::secondary::config
+```
+
+### <a name="profile_kerberos_server--secondary--firewall"></a>`profile_kerberos_server::secondary::firewall`
+
+Configure firewall rules for Kerberos services
+
+#### Examples
+
+##### 
+
+```puppet
+include profile_kerberos_server::secondary::firewall
+```
+
+### <a name="profile_kerberos_server--secondary--scripts"></a>`profile_kerberos_server::secondary::scripts`
+
+Configure scripts for Kerberos services
+
+#### Examples
+
+##### 
+
+```puppet
+include profile_kerberos_server::secondary::scripts
+```
+
+### <a name="profile_kerberos_server--secondary--services"></a>`profile_kerberos_server::secondary::services`
+
+Configure services for Kerberos server
+
+#### Examples
+
+##### 
+
+```puppet
+include profile_kerberos_server::secondary::services
+```
 

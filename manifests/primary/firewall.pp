@@ -1,5 +1,8 @@
 # @summary Configure firewall rules for Kerberos services
 #
+# @param kadmin_allow_cidr
+#   CIDR to allow kadmin access to in firewall
+#
 # @example
 #   include profile_kerberos_server::primary::firewall
 #

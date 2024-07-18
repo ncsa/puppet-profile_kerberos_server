@@ -1,5 +1,8 @@
 # @summary Kerberos configuration files for primary KDCs
 #
+# @param kadm_acl_contents
+#   the entire contents of the kadm5.acl file
+#
 # @example
 #   include profile_kerberos_server::primary::config
 #
