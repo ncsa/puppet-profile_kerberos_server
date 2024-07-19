@@ -20,9 +20,10 @@ $tofile = $backupdir.$data.".".$suffix;
 $tofile_cur = $backupdir.$data.".current";
 $dest = $backupdir;
 
-if((-e $file) && (-e $dest)){
-    system("cp $file $tofile");
-    system("cp $tofile $tofile_cur");
-}else{
-    print "krb5_sm_backup failed\n";
+if (( -e $file ) && ( -e $dest )) {
+   system("cp $file $tofile");
+   system("cp -f $tofile $tofile_cur");
+   system(qq(bzip2 -9vs $tofile));
+} else {
+   print "krb5_sm_backup failed\n";
 }
