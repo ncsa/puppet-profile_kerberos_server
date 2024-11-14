@@ -11,7 +11,7 @@ class profile_kerberos_server::primary::cron {
     user        => 'root',
     hour        => '*',
     minute      => '*/5',
-    environment => ['SHELL=/bin/sh', 'MAILTO=kerberos-admin@ncsa.uiuc.edu'],
+    environment => ['SHELL=/bin/sh', 'MAILTO=kerberos-admin@lists.ncsa.illinois.edu'],
     #description => 'Propagate the database to secondary KDCs every five minutes'
   }
 
@@ -22,7 +22,7 @@ class profile_kerberos_server::primary::cron {
     user        => 'root',
     hour        => '03',
     minute      => '04',
-    environment => ['SHELL=/bin/sh', 'MAILTO=kerberos-admin@ncsa.uiuc.edu'],
+    environment => ['SHELL=/bin/sh', 'MAILTO=kerberos-admin@lists.ncsa.illinois.edu'],
     #description => 'Make daily backup of propagated database on local disk'
   }
 
@@ -35,7 +35,7 @@ class profile_kerberos_server::primary::cron {
     user        => 'root',
     hour        => '0',
     minute      => '50',
-    environment => ['SHELL=/bin/sh', 'MAILTO=kerberos-admin@ncsa.uiuc.edu'],
+    environment => ['SHELL=/bin/sh', 'MAILTO=kerberos-admin@lists.ncsa.illinois.edu'],
     #description => 'Put principal information into MySQL database'
   }
 }

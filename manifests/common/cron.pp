@@ -11,7 +11,7 @@ class profile_kerberos_server::common::cron {
     user        => 'root',
     hour        => 4,
     minute      => 3,
-    environment => ['SHELL=/bin/sh', 'MAILTO=kerberos-admin@ncsa.uiuc.edu'],
+    environment => ['SHELL=/bin/sh', 'MAILTO=kerberos-admin@lists.ncsa.illinois.edu'],
     #description => 'Make daily backup of propagated database on local disk'
   }
 
@@ -22,7 +22,7 @@ class profile_kerberos_server::common::cron {
     user        => 'root',
     hour        => 0,
     minute      => 0,
-    environment => ['SHELL=/bin/sh', 'MAILTO=kerberos-admin@ncsa.uiuc.edu'],
+    environment => ['SHELL=/bin/sh', 'MAILTO=kerberos-admin@lists.ncsa.illinois.edu'],
     #description => 'Roll the kerberos logs to AFS'
   }
 
@@ -33,7 +33,7 @@ class profile_kerberos_server::common::cron {
     user        => 'root',
     hour        => 0,
     minute      => 1,
-    environment => ['SHELL=/bin/sh', 'MAILTO=kerberos-admin@ncsa.uiuc.edu'],
+    environment => ['SHELL=/bin/sh', 'MAILTO=kerberos-admin@lists.ncsa.illinois.edu'],
     #description => 'Roll the syslogs to AFS'
   }
 }

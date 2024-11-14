@@ -41,7 +41,7 @@ log_facility="local6"
 log_file="/tmp/propagate.$$"
 
 # User to send errors to
-user="kerberos-admin@ncsa.illinois.edu"
+user="kerberos-admin@lists.ncsa.illinois.edu"
 
 # Uncomment for testing
 #user="lindsey@ncsa.uiuc.edu"
