@@ -7,7 +7,7 @@
 #Feb 17 10:47:20 dop  -- root[28930]: ROOT LOGIN ON tty2
 #Feb 17 10:58:05 dop  -- dopheide: LOGIN ON tty2 BY dopheide
 
-$notifyemail = "kerberos-admin\@ncsa.uiuc.edu";
+$notifyemail = "kerberos-admin\@lists.ncsa.illinois.edu";
 
 open(LOG,"tail --follow=name /var/log/krb5.log|");
 

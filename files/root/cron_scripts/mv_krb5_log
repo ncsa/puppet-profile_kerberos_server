@@ -14,7 +14,7 @@ use Sys::Hostname;
 my $DIR = "/var/log";
 my $LOGDIR = "/afs/ncsa/projects/kerberos/logs/krb5";
 
-my $MAILTO = "kerberos-admin\@ncsa.uiuc.edu";
+my $MAILTO = "kerberos-admin\@lists.ncsa.illinois.edu";
 
 my $pidfile = "/var/run/syslogd.pid";
 

@@ -59,7 +59,7 @@ $root_princ = 0;
 
 %userlist = ();
 
-$mailto = "security-alerts+krb\@ncsa.illinois.edu,kerberos-admin\@ncsa.illinois.edu";
+$mailto = "security-alerts+krb\@ncsa.illinois.edu,kerberos-admin\@lists.ncsa.illinois.edu";
 #$mailto = "lindsey\@ncsa.uiuc.edu";
 $mail_from = "krb5_db_check";
 $mail_subj = "Kerberos DB stats";

@@ -9,7 +9,7 @@ use Sys::Hostname;
 $ENV{PATH} = '/usr/ncsa/bin:' . $ENV{PATH};
 
 # list of users to mail updates to
-my $mailto = "kerberos-admin\@ncsa.uiuc.edu";
+my $mailto = "kerberos-admin\@lists.ncsa.illinois.edu";
 my $subject = "Kerberos syslogs rolled over";
 my $sendmail = 0;
 
