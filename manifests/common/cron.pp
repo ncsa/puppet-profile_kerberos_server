@@ -17,23 +17,23 @@ class profile_kerberos_server::common::cron {
 
 # Roll the kerberos logs to AFS
 # 0 0 * * * /root/cron_scripts/mv_krb5_log > /dev/null 2>&1
-  cron { 'mv_krb5_log':
-    command     => '/root/cron_scripts/mv_krb5_log',
-    user        => 'root',
-    hour        => 0,
-    minute      => 0,
-    environment => ['SHELL=/bin/sh', 'MAILTO=kerberos-admin@lists.ncsa.illinois.edu'],
-    #description => 'Roll the kerberos logs to AFS'
-  }
+#  cron { 'mv_krb5_log':
+#    command     => '/root/cron_scripts/mv_krb5_log',
+#    user        => 'root',
+#    hour        => 0,
+#    minute      => 0,
+#    environment => ['SHELL=/bin/sh', 'MAILTO=kerberos-admin@lists.ncsa.illinois.edu'],
+#    #description => 'Roll the kerberos logs to AFS'
+#  }
 
 # Roll the syslogs to AFS
 # 0 1 * * * /root/cron_scripts/mv_syslogs > /dev/null 2>&1
-  cron { 'mv_syslogs':
-    command     => '/root/cron_scripts/mv_syslogs',
-    user        => 'root',
-    hour        => 0,
-    minute      => 1,
-    environment => ['SHELL=/bin/sh', 'MAILTO=kerberos-admin@lists.ncsa.illinois.edu'],
-    #description => 'Roll the syslogs to AFS'
-  }
+#  cron { 'mv_syslogs':
+#    command     => '/root/cron_scripts/mv_syslogs',
+#    user        => 'root',
+#    hour        => 0,
+#    minute      => 1,
+#    environment => ['SHELL=/bin/sh', 'MAILTO=kerberos-admin@lists.ncsa.illinois.edu'],
+#    #description => 'Roll the syslogs to AFS'
+#  }
 }
